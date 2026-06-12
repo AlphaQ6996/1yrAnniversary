@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>For You 💜</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Reenie+Beanie&family=Nunito:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: #0d0618;
+    font-family: 'Nunito', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* ── Starry sky ── */
+  #sky {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* ── Page layout ── */
+  .page {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 60px;
+  }
+
+  /* ── Hero heading ── */
+  .hero {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .hero-label {
+    font-family: 'Caveat', cursive;
+    font-size: 1rem;
+    color: #c8a8e9;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    opacity: 0.8;
+  }
+
+  .hero-title {
+    font-family: 'Reenie Beanie', cursive;
+    font-size: clamp(2.8rem, 7vw, 5rem);
+    color: #f0e6ff;
+    line-height: 1.1;
+    text-shadow: 0 0 40px rgba(180, 120, 255, 0.5);
+  }
+
+  .hero-sub {
+    font-family: 'Caveat', cursive;
+    font-size: 1.1rem;
+    color: #a888cc;
+    margin-top: 10px;
+  }
+
+  /* ── Corkboard ── */
+  .corkboard {
+    width: 100%;
+    max-width: 900px;
+    background:
+      repeating-linear-gradient(
+        45deg,
+        rgba(0,0,0,0.03) 0px,
+        rgba(0,0,0,0.03) 1px,
+        transparent 1px,
+        transparent 8px
+      ),
+      linear-gradient(160deg, #c8965a 0%, #b07840 30%, #a06830 60%, #b07840 100%);
+    border-radius: 12px;
+    padding: 40px 30px;
+    box-shadow:
+      0 0 0 6px #8a5a28,
+      0 0 0 10px #6b4520,
+      0 20px 60px rgba(0,0,0,0.7),
+      inset 0 1px 0 rgba(255,255,255,0.1);
+    position: relative;
+  }
+
+  /* corner screws */
+  .corkboard::before, .corkboard::after {
+    content: '';
+    position: absolute;
+    width: 16px; height: 16px;
+    background: radial-gradient(circle at 40% 35%, #c0a060, #6b4520);
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  }
+  .corkboard::before { top: 14px; left: 14px; }
+  .corkboard::after  { top: 14px; right: 14px; }
+
+  /* ── Notes grid ── */
+  .notes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 28px;
+  }
+
+  /* ── Individual note ── */
+  .note {
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+
+  .note:hover { transform: scale(1.04) rotate(0.5deg); }
+
+  /* Thumbtack */
+  .tack {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4), inset 0 -1px 2px rgba(0,0,0,0.3);
+  }
+
+  .tack::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 8px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 0 0 2px 2px;
+  }
+
+  /* Note paper */
+  .note-paper {
+    background: var(--note-bg, #e8d5f5);
+    border-radius: 3px;
+    padding: 22px 16px 18px;
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow:
+      3px 4px 12px rgba(0,0,0,0.25),
+      inset 0 1px 0 rgba(255,255,255,0.6);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ruled lines */
+  .note-paper::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      transparent,
+      transparent 27px,
+      rgba(160,120,200,0.15) 27px,
+      rgba(160,120,200,0.15) 28px
+    );
+    background-position: 0 38px;
+    pointer-events: none;
+  }
+
+  .note-date {
+    font-family: 'Caveat', cursive;
+    font-size: 0.75rem;
+    color: rgba(80,40,120,0.5);
+    letter-spacing: 0.05em;
+  }
+
+  .note-title {
+    font-family: 'Caveat', cursive;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #4a1a7a;
+    line-height: 1.3;
+    position: relative;
+    z-index: 1;
+  }
+
+  .note-preview {
+    font-family: 'Caveat', cursive;
+    font-size: 0.95rem;
+    color: #6a3a9a;
+    line-height: 1.5;
+    opacity: 0.85;
+    position: relative;
+    z-index: 1;
+    flex: 1;
+  }
+
+  .note-hint {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.65rem;
+    color: rgba(100,50,150,0.45);
+    text-align: right;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Modal / letter overlay ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(8, 2, 20, 0.82);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(4px);
+  }
+
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .letter {
+    background: linear-gradient(160deg, #f5ecff 0%, #ede0ff 100%);
+    border-radius: 4px;
+    max-width: 520px;
+    width: 100%;
+    padding: 40px 36px 36px;
+    position: relative;
+    box-shadow:
+      0 30px 80px rgba(80,0,160,0.3),
+      0 0 0 1px rgba(180,130,255,0.2);
+    transform: scale(0.9) translateY(20px);
+    transition: transform 0.3s ease;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+
+  .modal-overlay.open .letter {
+    transform: scale(1) translateY(0);
+  }
+
+  /* horizontal line at top of letter */
+  .letter::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #9b59b6, #c39bd3, #7d3c98);
+    border-radius: 4px 4px 0 0;
+  }
+
+  .letter-close {
+    position: absolute;
+    top: 14px; right: 16px;
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    color: #9b59b6;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s;
+    font-family: 'Caveat', cursive;
+  }
+  .letter-close:hover { color: #6c3483; }
+
+  .letter-date {
+    font-family: 'Caveat', cursive;
+    font-size: 0.85rem;
+    color: #a87cc8;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .letter-title {
+    font-family: 'Reenie Beanie', cursive;
+    font-size: 2.2rem;
+    color: #4a1a7a;
+    line-height: 1.2;
+    margin-bottom: 20px;
+  }
+
+  .letter-body {
+    font-family: 'Caveat', cursive;
+    font-size: 1.15rem;
+    color: #3a1060;
+    line-height: 1.85;
+    white-space: pre-line;
+  }
+
+  .letter-sig {
+    font-family: 'Reenie Beanie', cursive;
+    font-size: 1.8rem;
+    color: #7d3c98;
+    margin-top: 24px;
+    text-align: right;
+  }
+
+  .letter-mood {
+    display: inline-block;
+    margin-top: 18px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.72rem;
+    color: #b39ddb;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-top: 1px solid rgba(155,89,182,0.2);
+    padding-top: 10px;
+    width: 100%;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 36px;
+    text-align: center;
+    font-family: 'Caveat', cursive;
+    font-size: 1rem;
+    color: rgba(180, 140, 220, 0.5);
+  }
+
+  /* scrollbar */
+  .letter::-webkit-scrollbar { width: 4px; }
+  .letter::-webkit-scrollbar-track { background: transparent; }
+  .letter::-webkit-scrollbar-thumb { background: #c39bd3; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<canvas id="sky"></canvas>
+
+<div class="page">
+  <div class="hero">
+    <div class="hero-label">one whole year 💜</div>
+    <div class="hero-title">little notes for you</div>
+    <div class="hero-sub">click any note to open it ✨</div>
+  </div>
+
+  <div class="corkboard">
+    <div class="notes-grid" id="notesGrid"></div>
+  </div>
+
+  <div class="footer">made with so much love, just for you &nbsp;🌙</div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="letter" id="letterCard">
+    <button class="letter-close" id="closeBtn">✕</button>
+    <span class="letter-date" id="lDate"></span>
+    <div class="letter-title" id="lTitle"></div>
+    <div class="letter-body" id="lBody"></div>
+    <div class="letter-sig" id="lSig"></div>
+    <span class="letter-mood" id="lMood"></span>
+  </div>
+</div>
+
+<script>
+// ── Note data — replace with your own words! ──────────────────────────
+const notes = [
+  {
+    tack: '#d4a8f0',
+    bg: '#ecdeff',
+    date: 'from the start',
+    title: 'The first time we talked',
+    preview: 'I didn\'t expect that day to change everything...',
+    body: `I didn't expect that day to change everything.
+
+I still remember the first few things we said, although the way we met was reaallyy unconventional lol, the way you spoke and joked took me completely by suprise. I found myself not wanting to stop (Even after those 4 hours 😘). And I wanted to keep talking with you everyday since and I'm so glad and the very happiest that it happened
+
+Eventhough it took me so long to "forced" you to be my gf 😜.`,
+    sig: 'yours from the very start 💜',
+    mood: '💜💜💜💜💜💜'
+  },
+  {
+    tack: '#f7a8d4',
+    bg: '#ffe0f0',
+    date: 'late night',
+    title: 'The way you laugh',
+    preview: 'Even through a screen it gets me every time...',
+    body: `Even through a screen it gets me every time.
+
+The way you laugh at my jokes, the dramatics we have and knowing that i could be the one to make you laugh like that  just makes me the happiest ever. And I love that you can feel free to be silly and yourself with me.  
+
+One of my favourite things about you`,
+    sig: 'hopelessly 💜',
+    mood: 'mood: warm & soft'
+  },
+  {
+    tack: '#a8d8f0',
+    bg: '#dff0ff',
+    date: '3:00am',
+    title: 'When I can\'t sleep',
+    preview: 'I end up just thinking about you...',
+    body: `When the room is quiet and I should be sleeping, my brain goes to you.
+
+Thinking about the fun times, your laughs, the dramatics that we've had(Like the BIGG one I'm gonna have after last night😜). Just helps to quiet all the other thoughts sometimes. And I'm glad i know that I can do that every night till forever
+
+You're my 3am happy place darling.`,
+    sig: 'always thinking of you 🌙',
+    mood: 'thinking about you again'
+  },
+  {
+    tack: '#f0d4a8',
+    bg: '#fff4df',
+    date: 'random day',
+    title: 'You make the distance easier',
+    preview: 'I can\'t really pretend the distance doesn\'t suck...',
+    body: `I can\'t really pretend the distance doesn\'t suck. They do and I can\'t wait to close it'.
+
+But talking with you everyday(Even when I get ignored sometimes 🙄😜) makes it so much easier. Knowing that even when I miss you, you're just a text message away. And I can\'t help but abuse it, texting you every second I want attention and the best part is you give it to me 💕'
+
+That already makes the wait worth it.`,
+    sig: 'counting every second till we can be together 💜',
+    mood: 'miss you but also so grateful for you'
+  },
+  {
+    tack: '#b8f0a8',
+    bg: '#e8ffe0',
+    date: 'game/show time',
+    title: 'Some of my favourite moments with you',
+    preview: 'Just us calling and talking while we enjoy...',
+    body: `Just us calling and talking while we enjoy the things we share. Whether it's the game or the show
+
+ Whether it's the game or the shows we watch, or even if we're just talking about any random things while we each do our own thing. It feels comfortable and fun with you, even if you think you're bad at the game(Which you are NOT!!!), the extra time waiting for you to get over the obstacle is just more time for me to spend with you
+
+I could never not want that time with you.💜`,
+    sig: 'easy with you 💜',
+    mood: 'waiting for next time i can beat you at the minigames'
+  },
+  {
+    tack: '#e8a8f0',
+    bg: '#f8e0ff',
+    date: 'every day',
+    title: 'Things I love about you',
+    preview: 'All the small things...',
+    body: `The way you check in when I seem off, even when I don\'t say anything.
+The way you remember the little things I mentioned once before(Spoilt my question about lloyd though 🙄).
+The way you genuinely  get excited about things you love and the things I love too.
+The way you share all the things with me, and all the pretties every morning
+
+And I love every single one of them.`,
+    sig: '💜',
+    mood: '💜'
+  },
+  {
+    tack: '#f0a8a8',
+    bg: '#ffe8e8',
+    date: 'every day',
+    title: 'The way you care',
+    preview: 'You do it everyday, like its almost...',
+    body: `You do it everyday, like its almost second nature.
+
+    The way you check in when something feels off. The way you share your day with me, the pretties every morning, the random things you think I'd like. The way you share all your problems with me so I can try to support or listen to them.
+
+    I don't think you always realise how much of an effect you have on me. But I do. Every single day.`,
+    sig: 'so grateful it\'s you 💜',
+    mood: '💜'
+  },
+  {
+    tack: '#a8f0e8',
+    bg: '#dffff8',
+    date: 'our anniversary',
+    title: 'One whole year',
+    preview: 'A year with you. A year of us...',
+    body: `A year of all the late nights and early mornings. Of the bad wifi calls and great conversations. Of missing you and being so glad I met you that day.
+
+A year from the day where I had to force your oblivious self and call you my girlfriend 😜. A year of more dramatics, more things to talk about, more ideas of what to do when we finally get together.
+
+If I could go back and do it all again, I wouldn\'t change a thing darling'
+
+Happy anniversary. I care about you more than this little note can hold.`,
+    sig: 'forever 💜',
+    mood: 'written on: the best day, one year later'
+  }
+];
+
+// ── Render notes ────────────────────────────────────────────────────
+const grid = document.getElementById('notesGrid');
+
+notes.forEach((n, i) => {
+  const wrap = document.createElement('div');
+  wrap.className = 'note';
+  // slight random rotation
+  const rot = (Math.random() * 6 - 3).toFixed(1);
+  wrap.style.transform = `rotate(${rot}deg)`;
+
+  wrap.innerHTML = `
+    <div class="tack" style="background: radial-gradient(circle at 35% 35%, ${n.tack}, ${n.tack}88);"></div>
+    <div class="note-paper" style="--note-bg: ${n.bg}">
+      <span class="note-date">${n.date}</span>
+      <div class="note-title">${n.title}</div>
+      <div class="note-preview">${n.preview}</div>
+      <div class="note-hint">tap to open ↗</div>
+    </div>
+  `;
+
+  wrap.addEventListener('click', () => openLetter(n));
+  grid.appendChild(wrap);
+});
+
+// ── Modal logic ──────────────────────────────────────────────────────
+const overlay = document.getElementById('modalOverlay');
+const closeBtn = document.getElementById('closeBtn');
+
+function openLetter(n) {
+  document.getElementById('lDate').textContent = n.date;
+  document.getElementById('lTitle').textContent = n.title;
+  document.getElementById('lBody').textContent = n.body;
+  document.getElementById('lSig').textContent = n.sig;
+  document.getElementById('lMood').textContent = n.mood;
+  overlay.classList.add('open');
+}
+
+closeBtn.addEventListener('click', () => overlay.classList.remove('open'));
+overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+
+// ── Starry sky canvas ────────────────────────────────────────────────
+const canvas = document.getElementById('sky');
+const ctx = canvas.getContext('2d');
+let stars = [];
+
+function resize() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  buildStars();
+}
+
+function buildStars() {
+  stars = [];
+  const count = Math.floor((canvas.width * canvas.height) / 2200);
+  for (let i = 0; i < count; i++) {
+    stars.push({
+      x:     Math.random() * canvas.width,
+      y:     Math.random() * canvas.height,
+      r:     Math.random() * 1.4 + 0.3,
+      alpha: Math.random(),
+      speed: Math.random() * 0.008 + 0.003,
+      phase: Math.random() * Math.PI * 2,
+      hue:   Math.random() < 0.25 ? 270 : (Math.random() < 0.5 ? 220 : 0)
+    });
+  }
+}
+
+function drawStars(t) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // deep purple gradient sky
+  const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  grad.addColorStop(0,   '#0d0618');
+  grad.addColorStop(0.5, '#110a20');
+  grad.addColorStop(1,   '#1a0828');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  stars.forEach(s => {
+    const a = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(t * s.speed + s.phase));
+    const color = s.hue === 270
+      ? `rgba(200,160,255,${a})`
+      : s.hue === 220
+      ? `rgba(180,210,255,${a})`
+      : `rgba(255,255,255,${a})`;
+
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    // glow on bigger stars
+    if (s.r > 1.1) {
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r * 2.5, 0, Math.PI * 2);
+      const glow = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 2.5);
+      glow.addColorStop(0, `rgba(200,160,255,${a * 0.3})`);
+      glow.addColorStop(1, 'transparent');
+      ctx.fillStyle = glow;
+      ctx.fill();
+    }
+  });
+}
+
+let raf;
+function animate(t) {
+  drawStars(t / 1000);
+  raf = requestAnimationFrame(animate);
+}
+
+window.addEventListener('resize', resize);
+resize();
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>
